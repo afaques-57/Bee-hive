@@ -169,7 +169,7 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
 
                 case NO_QUEEN_TEXT: {
                     eventColor = ContextCompat.getColor(context, R.color.yellowWarning);
-                    eventText = "Queen Bee";
+                    eventText = "No Queen";
                     break;
                 }
 
