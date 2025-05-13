@@ -231,10 +231,10 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
         } else {
             runWithActivity(activity -> {
                 if(ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.BLUETOOTH_CONNECT)) {
-                    showToast("Location permission required!", true);
+                    showToast("Precise Location permission required!", true);
                 } else {
                     runWithContext(context -> {
-                        showToast("Grant location permission to proceed!", true);
+                        showToast("Grant precise location permission to proceed!", true);
                         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
                         intent.setData(Uri.fromParts("package", context.getPackageName(), null));
                         context.startActivity(intent);
