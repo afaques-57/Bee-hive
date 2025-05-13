@@ -1,6 +1,8 @@
-package com.project.beehive.model;
+package com.project.beehivemonitor.model;
 
-public class ScannedDevice {
+import java.io.Serializable;
+
+public class ScannedDevice implements Serializable {
     private final String name;
     private final String macAddress;
 

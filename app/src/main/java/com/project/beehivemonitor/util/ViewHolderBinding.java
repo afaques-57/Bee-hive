@@ -1,4 +1,4 @@
-package com.project.beehive.util;
+package com.project.beehivemonitor.util;
 
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;

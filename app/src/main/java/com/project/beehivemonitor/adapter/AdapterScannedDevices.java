@@ -1,4 +1,4 @@
-package com.project.beehive.adapter;
+package com.project.beehivemonitor.adapter;
 
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -7,12 +7,13 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 
-import com.project.beehive.databinding.ItemSelectDeviceBinding;
-import com.project.beehive.model.ScannedDevice;
-import com.project.beehive.util.ViewHolderBinding;
+import com.project.beehivemonitor.databinding.ItemSelectDeviceBinding;
+import com.project.beehivemonitor.model.ScannedDevice;
+import com.project.beehivemonitor.util.ViewHolderBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class AdapterScannedDevices extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -36,7 +37,8 @@ public class AdapterScannedDevices extends RecyclerView.Adapter<RecyclerView.Vie
         ScannedDevice scannedDevice = scannedDeviceList.get(position);
         binding.getRoot().setOnClickListener(view -> onItemClickListener.onClick(scannedDevice));
 
-        binding.tvDeviceName.setText(scannedDevice.getName());
+        String deviceName = scannedDevice.getName();
+        binding.tvDeviceName.setText(deviceName != null && !deviceName.isBlank() ? deviceName : "- - - - -");
         binding.tvDeviceMacAddress.setText(scannedDevice.getMacAddress());
     }
 
@@ -46,11 +48,15 @@ public class AdapterScannedDevices extends RecyclerView.Adapter<RecyclerView.Vie
     }
 
     public void addScannedDevice(ScannedDevice scannedDevice) {
-        scannedDeviceList.add(scannedDevice);
+        if(scannedDeviceList.stream().noneMatch(device -> Objects.equals(scannedDevice.getMacAddress(), device.getMacAddress()))) {
+            scannedDeviceList.add(scannedDevice);
+            notifyItemInserted(scannedDeviceList.indexOf(scannedDevice));
+        }
     }
 
     public void clearScannedDevices() {
         scannedDeviceList.clear();
+        notifyDataSetChanged();
     }
 
     @FunctionalInterface

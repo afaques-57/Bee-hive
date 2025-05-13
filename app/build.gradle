@@ -3,12 +3,12 @@ plugins {
 }
 
 android {
-    namespace 'com.project.beehive'
+    namespace 'com.project.beehivemonitor'
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.project.beehive"
-        minSdk 28
+        applicationId "com.project.beehivemonitor"
+        minSdk 31
         targetSdk 35
         versionCode 1
         versionName "1.0"
@@ -22,8 +22,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     buildFeatures {
@@ -39,4 +39,6 @@ dependencies {
     implementation libs.constraintlayout
     implementation libs.navigation.fragment
     implementation libs.navigation.ui
+    implementation libs.gson
+    implementation libs.mpandroidchart
 }
