@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBinding> {
 
-    private static final String SCAN_DEVICE_NAME_PREFIX = "FT_38110";
+    private static final String SCAN_DEVICE_NAME_PREFIX = "BeeHive";
 
     private static final String START_SCAN_TEXT = "Start Scan";
     private static final String STOP_SCAN_TEXT = "Stop Scan";
@@ -159,7 +159,7 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
         if(scannedDeviceEvent.hasBeenHandled()) return;
         ScannedDevice scannedDevice = scannedDeviceEvent.getContentIfNotHandled();
         if(scannedDevice != null) {
-            if(scannedDevice.getName() != null && !scannedDevice.getName().isBlank() && scannedDevice.getName().startsWith(SCAN_DEVICE_NAME_PREFIX)) {
+            if(scannedDevice.getName() != null && !scannedDevice.getName().isBlank() && scannedDevice.getName().toLowerCase().startsWith(SCAN_DEVICE_NAME_PREFIX.toLowerCase())) {
                 adapterScannedDevices.addScannedDevice(scannedDevice);
             }
         } else {

@@ -39,7 +39,8 @@ public abstract class BaseFragment<T extends ViewBinding> extends Fragment {
         return binding.getRoot();
     }
 
-    protected void initOnCreateView() {}
+    protected void initOnCreateView() {
+    }
 
     @NonNull
     abstract protected T getBinding(@Nullable ViewGroup container);
@@ -49,7 +50,7 @@ public abstract class BaseFragment<T extends ViewBinding> extends Fragment {
     }
 
     protected void continueOnBackPress(OnBackPressedCallback onBackPressedCallback) {
-        if(onBackPressedCallback.isEnabled()) {
+        if (onBackPressedCallback.isEnabled()) {
             onBackPressedCallback.setEnabled(false);
             onBackPressed();
             onBackPressedCallback.setEnabled(true);
@@ -77,17 +78,17 @@ public abstract class BaseFragment<T extends ViewBinding> extends Fragment {
     }
 
     protected void showLoading(String infoText) {
-        if(processingDialog == null) {
+        if (processingDialog == null) {
             processingDialog = ProcessingDialog.newInstance();
             processingDialog.setInfoText(infoText);
             processingDialog.show(requireActivity().getSupportFragmentManager(), "loading");
-        } else if(infoText != null && !Objects.equals(processingDialog.getInfoText(), infoText)){
+        } else if (infoText != null && !Objects.equals(processingDialog.getInfoText(), infoText)) {
             processingDialog.setInfoText(infoText);
         }
     }
 
     protected void hideLoading() {
-        if(processingDialog != null) {
+        if (processingDialog != null) {
             processingDialog.dismiss();
             processingDialog = null;
         }
@@ -98,9 +99,7 @@ public abstract class BaseFragment<T extends ViewBinding> extends Fragment {
     }
 
     protected void showToast(String msg, boolean isLengthLong) {
-        runWithContext(context -> {
-            Toast.makeText(context, msg, isLengthLong ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show();
-        });
+        runWithContext(context -> Toast.makeText(context, msg, isLengthLong ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show());
     }
 }
 
