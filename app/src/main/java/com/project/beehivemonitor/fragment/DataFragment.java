@@ -4,15 +4,12 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.OnBackPressedDispatcher;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -21,19 +18,15 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.project.beehivemonitor.R;
-import com.project.beehivemonitor.adapter.AdapterScannedDevices;
 import com.project.beehivemonitor.databinding.FragmentDataBinding;
-import com.project.beehivemonitor.databinding.FragmentSelectDeviceBinding;
 import com.project.beehivemonitor.model.ScannedDevice;
 import com.project.beehivemonitor.util.BluetoothOperations;
 import com.project.beehivemonitor.util.ConnectionState;
@@ -46,11 +39,8 @@ import com.project.beehivemonitor.viewmodel.ConnectionViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DataFragment extends BaseFragment<FragmentDataBinding> {
 
@@ -118,7 +108,7 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
     @Override
     public void onResume() {
         super.onResume();
-        addData();
+//        addData();
     }
 
     @Override
@@ -142,14 +132,16 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
         });
         beeMonitorDataViewModel.getTemperatureLiveData().observe(this, temperatureEvent -> {
             Float temperature = temperatureEvent.getContentIfNotHandled();
-            if(temperature != null) {
+            if (temperature != null) {
+                Logger.info("temperatureLiveData - temperature: " + temperature);
                 temperatureValues.add(temperature);
                 handler.post(() -> populateLineChart(binding.lcTemperature, "Temperature", temperatureValues));
             }
         });
         beeMonitorDataViewModel.getHumidityLiveData().observe(this, humidityEvent -> {
             Float humidity = humidityEvent.getContentIfNotHandled();
-            if(humidity != null) {
+            if (humidity != null) {
+                Logger.info("humidityLiveData - humidity: " + humidity);
                 humidityValues.add(humidity);
                 handler.post(() -> populateLineChart(binding.lcHumidity, "Humidity", humidityValues));
             }

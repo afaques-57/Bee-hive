@@ -16,7 +16,7 @@ public class ConnectionViewModel extends ViewModel {
     private final MutableLiveData<Event<Boolean>> bluetoothStateLiveData = new MutableLiveData<>();
     private final MutableLiveData<Event<ConnectionState>> connectionStateLiveData = new MutableLiveData<>();
 
-    private final BluetoothOperations.BluetoothOperationsCallback bluetoothOperationsCallback = new BluetoothOperations.BluetoothOperationsCallback() {
+    private final BluetoothOperations.ConnectionCallback connectionCallback = new BluetoothOperations.ConnectionCallback() {
         @Override
         public void onBluetoothStateChanged(boolean isOn) {
             bluetoothStateLiveData.postValue(new Event<>(isOn));
@@ -39,7 +39,7 @@ public class ConnectionViewModel extends ViewModel {
     };
 
     public ConnectionViewModel() {
-        BluetoothOperations.addCallback(bluetoothOperationsCallback);
+        BluetoothOperations.addConnectionCallback(connectionCallback);
     }
 
     public LiveData<Event<ScannedDevice>> getScannedDeviceLiveData() {
@@ -79,6 +79,6 @@ public class ConnectionViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         super.onCleared();
-        BluetoothOperations.removeCallback(bluetoothOperationsCallback);
+        BluetoothOperations.removeConnectionCallback(connectionCallback);
     }
 }

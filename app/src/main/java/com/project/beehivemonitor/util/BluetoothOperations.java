@@ -31,30 +31,31 @@ import androidx.core.content.ContextCompat;
 import com.project.beehivemonitor.BeeHiveMonitorApp;
 import com.project.beehivemonitor.model.ScannedDevice;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-
-import kotlin.Suppress;
-import kotlin.jvm.Volatile;
 
 public final class BluetoothOperations {
 
     private static final UUID CCC_DESCRIPTOR_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
+    private static final int GATT_MIN_MTU_SIZE = 23;
+    private static final int GATT_MAX_MTU_SIZE = 517;
+
     private static final Handler handler = new Handler(Looper.getMainLooper());
 
-    private static final Set<BluetoothOperationsCallback> bluetoothOperationsCallbacks = new HashSet<>();
+    private static final Set<ConnectionCallback> connectionCallbacks = new HashSet<>();
+    private static final Map<String, List<DataCallback>> dataCallbacksMap = new HashMap<>();
 
     private static final Queue<Runnable> pendingWriteDescriptors = new ConcurrentLinkedQueue<>();
     private static final AtomicBoolean isWriteDescriptorInProgress = new AtomicBoolean(false);
@@ -72,13 +73,13 @@ public final class BluetoothOperations {
                 int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
                 switch (state) {
                     case BluetoothAdapter.STATE_ON: {
-                        sendBluetoothOperationCallback(bluetoothOperationsCallback -> bluetoothOperationsCallback.onBluetoothStateChanged(true));
+                        sendConnectionCallback(connectionCallback -> connectionCallback.onBluetoothStateChanged(true));
                         break;
                     }
                     case BluetoothAdapter.STATE_OFF: {
                         stopScan();
                         setDeviceConnectionState(ConnectionState.DISCONNECTED);
-                        sendBluetoothOperationCallback(bluetoothOperationsCallback -> bluetoothOperationsCallback.onBluetoothStateChanged(false));
+                        sendConnectionCallback(connectionCallback -> connectionCallback.onBluetoothStateChanged(false));
                         break;
                     }
                 }
@@ -124,11 +125,11 @@ public final class BluetoothOperations {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
-            sendBluetoothOperationCallback(bluetoothOperationsCallback -> {
+            sendConnectionCallback(connectionCallback -> {
                 try {
                     String deviceName = result.getDevice().getName();
                     deviceName = deviceName == null ? "" : deviceName;
-                    bluetoothOperationsCallback.onScannedDeviceFound(new ScannedDevice(deviceName, result.getDevice().getAddress()));
+                    connectionCallback.onScannedDeviceFound(new ScannedDevice(deviceName, result.getDevice().getAddress()));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -242,7 +243,7 @@ public final class BluetoothOperations {
                 switch (newState) {
                     case BluetoothProfile.STATE_CONNECTED: {
                         setDeviceConnectionState(ConnectionState.CONNECTED);
-                        handler.post(gatt::discoverServices);
+                        handler.post(() -> gatt.requestMtu(GATT_MAX_MTU_SIZE));
                         break;
                     }
 
@@ -313,28 +314,40 @@ public final class BluetoothOperations {
 
         @Override
         public void onCharacteristicRead(@NonNull BluetoothGatt gatt, @NonNull BluetoothGattCharacteristic characteristic, @NonNull byte[] value, int status) {
-            super.onCharacteristicRead(gatt, characteristic, value, status);
+            String uuid = characteristic.getUuid().toString();
+            Logger.info("onCharacteristicRead - characteristicUUID: " + uuid + ", status: " + status + ", value: " + Arrays.toString(value));
+            sendDataCallback(uuid, dataCallback -> {
+                try {
+                    dataCallback.onCharacteristicRead(value);
+                } catch (Exception e) {
+                    Logger.error("sendDataCallback onCharacteristicRead - error: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
         }
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicWrite(gatt, characteristic, status);
+            Logger.info("onCharacteristicWrite - characteristicUUID: " + characteristic.getUuid().toString() + ", status: " + status);
         }
 
         @Override
         public void onCharacteristicChanged(@NonNull BluetoothGatt gatt, @NonNull BluetoothGattCharacteristic characteristic, @NonNull byte[] value) {
-            Logger.info("onCharacteristicChanged - characteristicUUID: " + characteristic.getUuid() + ", value: " + Arrays.toString(value));
-            try {
-                Logger.info("onCharacteristicChanged - value: " + new String(value, Charset.defaultCharset()));
-            } catch (Exception e) {
-                Logger.error("onCharacteristicChanged - error: " + e.getMessage());
-                e.printStackTrace();
-            }
+            String uuid = characteristic.getUuid().toString();
+            Logger.info("onCharacteristicChanged - characteristicUUID: " + uuid + ", value: " + Arrays.toString(value));
+            sendDataCallback(uuid, dataCallback -> {
+                try {
+                    dataCallback.onCharacteristicChanged(value);
+                } catch (Exception e) {
+                    Logger.error("sendDataCallback onCharacteristicChanged - error: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
         }
 
         @Override
         public void onDescriptorRead(@NonNull BluetoothGatt gatt, @NonNull BluetoothGattDescriptor descriptor, int status, @NonNull byte[] value) {
-            super.onDescriptorRead(gatt, descriptor, status, value);
+            Logger.info("onDescriptorRead - characteristicUUID: " + descriptor.getUuid().toString() + ", status: " + status + ", value: " + Arrays.toString(value));
         }
 
         @Override
@@ -351,7 +364,13 @@ public final class BluetoothOperations {
 
         @Override
         public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
-            super.onMtuChanged(gatt, mtu, status);
+            Logger.info("onMtuChanged - mtu: " + mtu + ", status: " + status);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Logger.info("onMtuChanged success");
+            } else {
+                Logger.warn("onMtuChanged failed");
+            }
+            handler.post(gatt::discoverServices);
         }
     };
 
@@ -382,7 +401,7 @@ public final class BluetoothOperations {
     private static void setDeviceConnectionState(ConnectionState connectionState) {
         _deviceState = connectionState;
         Logger.info("setDeviceConnectionState - connectionState: " + connectionState);
-        sendBluetoothOperationCallback(bluetoothOperationsCallback -> bluetoothOperationsCallback.onConnectionStateChanged(connectionState));
+        sendConnectionCallback(connectionCallback -> connectionCallback.onConnectionStateChanged(connectionState));
     }
 
     private static BluetoothAdapter getBluetoothAdapter() {
@@ -403,19 +422,37 @@ public final class BluetoothOperations {
         return bluetoothDevice;
     }
 
-    private static void sendBluetoothOperationCallback(Consumer<BluetoothOperationsCallback> consumer) {
-        bluetoothOperationsCallbacks.forEach(consumer);
+    private static void sendDataCallback(String uuid, Consumer<DataCallback> consumer) {
+        List<DataCallback> dataCallbacks = dataCallbacksMap.get(uuid);
+        if (dataCallbacks != null) {
+            dataCallbacks.forEach(consumer);
+        }
     }
 
-    public static void addCallback(BluetoothOperationsCallback bluetoothOperationsCallback) {
-        bluetoothOperationsCallbacks.add(bluetoothOperationsCallback);
+    private static void sendConnectionCallback(Consumer<ConnectionCallback> consumer) {
+        connectionCallbacks.forEach(consumer);
     }
 
-    public static void removeCallback(BluetoothOperationsCallback bluetoothOperationsCallback) {
-        bluetoothOperationsCallbacks.remove(bluetoothOperationsCallback);
+    public static void addDataCallback(String uuid, DataCallback dataCallback) {
+        dataCallbacksMap.putIfAbsent(uuid, new ArrayList<>());
+        Objects.requireNonNull(dataCallbacksMap.get(uuid)).add(dataCallback);
     }
 
-    public interface BluetoothOperationsCallback {
+    public static void removeDataCallback(String uuid, DataCallback dataCallback) {
+        if (dataCallbacksMap.containsKey(uuid)) {
+            Objects.requireNonNull(dataCallbacksMap.get(uuid)).remove(dataCallback);
+        }
+    }
+
+    public static void addConnectionCallback(ConnectionCallback connectionCallback) {
+        connectionCallbacks.add(connectionCallback);
+    }
+
+    public static void removeConnectionCallback(ConnectionCallback connectionCallback) {
+        connectionCallbacks.remove(connectionCallback);
+    }
+
+    public interface ConnectionCallback {
         void onBluetoothStateChanged(boolean isOn);
 
         void onScannedDeviceFound(ScannedDevice scannedDevice);
@@ -423,5 +460,11 @@ public final class BluetoothOperations {
         void onDeviceScanFailed();
 
         void onConnectionStateChanged(ConnectionState connectionState);
+    }
+
+    public interface DataCallback {
+        void onCharacteristicChanged(byte[] value);
+
+        void onCharacteristicRead(byte[] value);
     }
 }
