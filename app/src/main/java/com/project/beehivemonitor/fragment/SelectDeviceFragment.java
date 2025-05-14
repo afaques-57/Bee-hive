@@ -77,14 +77,6 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
         });
         connectionViewModel.getBluetoothStateLiveData().observe(this, bluetoothStateObserver);
         connectionViewModel.getConnectionStateLiveData().observe(this, connectionStateObserver);
-//        handler.postDelayed(() -> { // Todo: Remove
-//            if(PreferenceManager.getInstance().getSelectedDevice() != null) {
-//                stopScan();
-//                isConnecting = true;
-//                ScannedDevice savedDevice = PreferenceManager.getInstance().getSelectedDevice();
-//                connectionViewModel.connect(savedDevice.getName(), savedDevice.getMacAddress());
-//            }
-//        }, 1000);
     }
 
     @Override

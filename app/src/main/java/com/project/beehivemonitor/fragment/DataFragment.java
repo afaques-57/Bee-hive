@@ -70,7 +70,7 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
 
     private final List<Float> temperatureValues = new CopyOnWriteArrayList<>();
     private final List<Float> humidityValues = new CopyOnWriteArrayList<>();
-    private static final int GRAPH_VALUES_LIMIT = 10; //Integer.MAX_VALUE;
+    private static final int GRAPH_VALUES_LIMIT = 10;
 
     @Override
     protected void initOnCreateView() {
@@ -219,7 +219,6 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
             lineDataSet.setColor(ContextCompat.getColor(context, R.color.orange));
             lineDataSet.setCircleColor(ContextCompat.getColor(context, R.color.black));
             lineDataSet.setFillColor(R.color.grey);
-//            lineDataSet.setFillAlpha(70);
         });
     }
 

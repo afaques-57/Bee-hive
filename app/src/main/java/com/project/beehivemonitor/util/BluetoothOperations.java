@@ -50,8 +50,6 @@ import kotlin.jvm.Volatile;
 
 public final class BluetoothOperations {
 
-    //    private static final UUID SERVICE_UUID = UUID.fromString("");
-//    private static final UUID NOTIFICATION_UUID = UUID.fromString("");
     private static final UUID CCC_DESCRIPTOR_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
     private static final Handler handler = new Handler(Looper.getMainLooper());
@@ -60,14 +58,12 @@ public final class BluetoothOperations {
 
     private static final Queue<Runnable> pendingWriteDescriptors = new ConcurrentLinkedQueue<>();
     private static final AtomicBoolean isWriteDescriptorInProgress = new AtomicBoolean(false);
-//    private static final Object writeDescriptorLock = new Object();
 
     private static BluetoothLeScanner bluetoothLeScanner;
     volatile private static BluetoothDevice _bluetoothDevice;
     volatile private static BluetoothGatt bluetoothGatt;
 
     volatile private static ConnectionState _deviceState = ConnectionState.DISCONNECTED;
-//    private final static AtomicBoolean isConnectionInProgress = new AtomicBoolean(false);
 
     private static final BroadcastReceiver adapterStateReceiver = new BroadcastReceiver() {
         @Override
@@ -170,12 +166,6 @@ public final class BluetoothOperations {
         BluetoothDevice bluetoothDevice = getBluetoothDevice(macAddress);
         if (!isDeviceConnected()) {
             setDeviceConnectionState(ConnectionState.CONNECTING);
-//            context.registerReceiver(bondStateReceiver, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
-//            if (bluetoothDevice.getBondState() == BluetoothDevice.BOND_BONDED) {
-//                handler.post(() -> bluetoothGatt = bluetoothDevice.connectGatt(context, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE));
-//            } else {
-//                handler.post(bluetoothDevice::createBond);
-//            }
             handler.post(() -> bluetoothGatt = bluetoothDevice.connectGatt(context, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE));
         } else {
             setDeviceConnectionState(ConnectionState.CONNECTED);
@@ -404,7 +394,6 @@ public final class BluetoothOperations {
         BluetoothDevice bluetoothDevice = _bluetoothDevice;
         if (bluetoothDevice == null || !Objects.equals(bluetoothDevice.getAddress(), macAddress)) {
             if (bluetoothDevice != null) {
-//                if(isConnectionInProgress.get()) throw new RuntimeException("Connection is Still in Progress!");
                 completeDisconnect();
             }
             bluetoothDevice = getBluetoothAdapter().getRemoteDevice(macAddress);
