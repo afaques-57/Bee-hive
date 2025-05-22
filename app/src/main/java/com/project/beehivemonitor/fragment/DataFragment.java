@@ -70,11 +70,13 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
         binding.btnConnection.setOnClickListener(view -> {
             switch (binding.btnConnection.getText().toString()) {
                 case CONNECT_TEXT: {
+                    Logger.info("DataFragment - Connect Button Pressed");
                     checkPermissionsAndConnect();
                     break;
                 }
 
                 case DISCONNECT_TEXT: {
+                    Logger.info("DataFragment - Disconnect Button Pressed");
                     connectionViewModel.disconnect();
                     break;
                 }
@@ -85,7 +87,8 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
         runWithActivity(activity -> activity.getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                BluetoothOperations.disconnectDevice();
+                Logger.info("DataFragment - onBackPressed");
+                connectionViewModel.disconnect();
                 PreferenceManager.getInstance().setSelectedDevice(null);
                 continueOnBackPress(this);
             }

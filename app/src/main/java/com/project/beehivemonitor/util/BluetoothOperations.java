@@ -211,10 +211,7 @@ public final class BluetoothOperations {
 
     public static boolean requestTurnOnBluetooth(Activity activity) {
         if (!isBluetoothEnabled()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-                    && (activity.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED
-                    || activity.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED
-            )) {
+            if (activity.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED || activity.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
                 return false;
             }
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
