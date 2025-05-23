@@ -155,7 +155,7 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
         runWithContext(context -> {
             int eventColor;
             String eventText;
-            switch (eventName.toUpperCase()) {
+            switch (eventName.trim().toUpperCase()) {
                 case NORMAL_TEXT: {
                     eventColor = ContextCompat.getColor(context, R.color.greenNormal);
                     eventText = "Normal";

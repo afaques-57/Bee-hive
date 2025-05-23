@@ -266,7 +266,7 @@ public final class BluetoothOperations {
             Logger.info("onServicesDiscovered - macAddress: " + macAddress + "status: " + status);
             BluetoothDevice bluetoothDevice = _bluetoothDevice;
             if (bluetoothDevice == null || !Objects.equals(bluetoothDevice.getAddress(), macAddress)) {
-                Logger.error("onConnectionStateChange received for different macAddress");
+                Logger.error("onServicesDiscovered received for different macAddress");
                 gatt.close();
                 return;
             }
