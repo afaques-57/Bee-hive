@@ -48,9 +48,9 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
     private static final String DISCONNECT_TEXT = "Disconnect";
     private static final String CONNECTING_TEXT = "Connecting...";
 
-    private static final String NORMAL_TEXT = "MATICA";
-    private static final String NO_QUEEN_TEXT = "NIMATICE";
-    private static final String SWARMING_TEXT = "ROJENJE";
+    public static final String NORMAL_TEXT = "QUEEN BEE";
+    public static final String NO_QUEEN_TEXT = "NO QUEEN BEE";
+    public static final String SWARMING_TEXT = "SWARMING";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
