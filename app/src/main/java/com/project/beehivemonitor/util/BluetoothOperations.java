@@ -121,8 +121,8 @@ public final class BluetoothOperations {
         }
     };*/
 
+    @SuppressLint("MissingPermission")
     private static final ScanCallback scanCallback = new ScanCallback() {
-        @SuppressLint("MissingPermission")
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
@@ -139,7 +139,7 @@ public final class BluetoothOperations {
 
         @Override
         public void onScanFailed(int errorCode) {
-            super.onScanFailed(errorCode);
+            sendConnectionCallback(ConnectionCallback::onDeviceScanFailed);
         }
     };
 
@@ -384,34 +384,39 @@ public final class BluetoothOperations {
 
     @SuppressLint("MissingPermission")
     private static boolean enableNotifications(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-        boolean notificationSet = gatt.setCharacteristicNotification(characteristic, true);
-        if (notificationSet) {
-            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CCC_DESCRIPTOR_UUID);
-            Logger.info("notification set");
-            if (descriptor != null) {
-                Logger.info("descriptor not null");
-                int properties = characteristic.getProperties();
-                byte[] descriptorValue;
-                if ((properties & BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
-                    descriptorValue = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE;
-                    Logger.info("characteristic has notify property");
-                } else if ((properties & BluetoothGattCharacteristic.PROPERTY_INDICATE) > 0) {
-                    descriptorValue = BluetoothGattDescriptor.ENABLE_INDICATION_VALUE;
-                    Logger.info("characteristic has indicate property");
-                } else {
-                    Logger.info("characteristic does not have notify or indicate property");
-                    return false;
+        try {
+            boolean notificationSet = gatt.setCharacteristicNotification(characteristic, true);
+            if (notificationSet) {
+                BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CCC_DESCRIPTOR_UUID);
+                Logger.info("notification set");
+                if (descriptor != null) {
+                    Logger.info("descriptor not null");
+                    int properties = characteristic.getProperties();
+                    byte[] descriptorValue;
+                    if ((properties & BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+                        descriptorValue = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE;
+                        Logger.info("characteristic has notify property");
+                    } else if ((properties & BluetoothGattCharacteristic.PROPERTY_INDICATE) > 0) {
+                        descriptorValue = BluetoothGattDescriptor.ENABLE_INDICATION_VALUE;
+                        Logger.info("characteristic has indicate property");
+                    } else {
+                        Logger.info("characteristic does not have notify or indicate property");
+                        return false;
+                    }
+                    boolean result;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        result = gatt.writeDescriptor(descriptor, descriptorValue) == BluetoothStatusCodes.SUCCESS;
+                    } else {
+                        descriptor.setValue(descriptorValue);
+                        result = gatt.writeDescriptor(descriptor);
+                    }
+                    Logger.info("writeDescriptor call successful: " + result);
+                    return true;
                 }
-                boolean result;
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    result = gatt.writeDescriptor(descriptor, descriptorValue) == BluetoothStatusCodes.SUCCESS;
-                } else {
-                    descriptor.setValue(descriptorValue);
-                    result = gatt.writeDescriptor(descriptor);
-                }
-                Logger.info("writeDescriptor call successful: " + result);
-                return true;
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Logger.error("enableNotifications exception: " + e.getMessage());
         }
         return false;
     }

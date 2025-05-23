@@ -101,6 +101,10 @@ public abstract class BaseFragment<T extends ViewBinding> extends Fragment {
     protected void showToast(String msg, boolean isLengthLong) {
         runWithContext(context -> Toast.makeText(context, msg, isLengthLong ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT).show());
     }
+
+    protected float dpToPx(float dp) {
+        return dp * requireContext().getResources().getDisplayMetrics().density;
+    }
 }
 
 

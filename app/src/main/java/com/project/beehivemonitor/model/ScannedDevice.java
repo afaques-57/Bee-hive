@@ -1,5 +1,7 @@
 package com.project.beehivemonitor.model;
 
+import androidx.annotation.NonNull;
+
 import java.io.Serializable;
 
 public class ScannedDevice implements Serializable {
@@ -17,5 +19,11 @@ public class ScannedDevice implements Serializable {
 
     public String getMacAddress() {
         return macAddress;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "ScannedDevice{" + "name='" + name + '\'' + ", macAddress='" + macAddress + '\'' + '}';
     }
 }

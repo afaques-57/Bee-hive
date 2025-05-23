@@ -56,7 +56,6 @@ public class BeeMonitorDataViewModel extends ViewModel {
 
         @Override
         public void onCharacteristicRead(byte[] value) {
-
         }
     };
 

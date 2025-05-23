@@ -9,6 +9,7 @@ import androidx.viewbinding.ViewBinding;
 
 import com.project.beehivemonitor.databinding.ItemSelectDeviceBinding;
 import com.project.beehivemonitor.model.ScannedDevice;
+import com.project.beehivemonitor.util.Logger;
 import com.project.beehivemonitor.util.ViewHolderBinding;
 
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class AdapterScannedDevices extends RecyclerView.Adapter<RecyclerView.Vie
     private final List<ScannedDevice> scannedDeviceList = new ArrayList<>();
     @NonNull
     private final OnItemClickListener onItemClickListener;
-    public AdapterScannedDevices(OnItemClickListener onItemClickListener) {
+    public AdapterScannedDevices(@NonNull OnItemClickListener onItemClickListener) {
         this.onItemClickListener = onItemClickListener;
     }
 
@@ -49,6 +50,7 @@ public class AdapterScannedDevices extends RecyclerView.Adapter<RecyclerView.Vie
 
     public void addScannedDevice(ScannedDevice scannedDevice) {
         if(scannedDeviceList.stream().noneMatch(device -> Objects.equals(scannedDevice.getMacAddress(), device.getMacAddress()))) {
+            Logger.info("AdapterScannedDevices - addScannedDevice: " + scannedDevice);
             scannedDeviceList.add(scannedDevice);
             notifyItemInserted(scannedDeviceList.indexOf(scannedDevice));
         }

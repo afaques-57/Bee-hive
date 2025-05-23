@@ -13,12 +13,14 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.github.mikephil.charting.charts.Chart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -82,8 +84,8 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
                 }
             }
         });
-        initLineChart(binding.lcTemperature);
-        initLineChart(binding.lcHumidity);
+        initLineChart(binding.lcTemperature, "No temperature data yet!");
+        initLineChart(binding.lcHumidity, "No humidity data yet!");
         runWithActivity(activity -> activity.getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -217,13 +219,15 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
         });
     }
 
-    private void initLineChart(LineChart lineChart) {
+    private void initLineChart(@NonNull LineChart lineChart, @Nullable String noDataText) {
         runWithContext(context -> {
             lineChart.getAxisRight().setEnabled(false);
             lineChart.setTouchEnabled(true);
             lineChart.setPinchZoom(true);
             lineChart.getDescription().setEnabled(false);
-            lineChart.setNoDataText("No data yet!");
+            lineChart.setNoDataText(noDataText != null && !noDataText.isBlank() ? noDataText : "No data yet!");
+            lineChart.setNoDataTextTypeface(ResourcesCompat.getFont(context, R.font.poppins_medium));
+            lineChart.getPaint(Chart.PAINT_INFO).setTextSize(dpToPx(16));
 
             XAxis xAxis = lineChart.getXAxis();
             xAxis.setLabelRotationAngle(0);

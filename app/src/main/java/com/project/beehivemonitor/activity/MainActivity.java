@@ -8,6 +8,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.project.beehivemonitor.R;
 import com.project.beehivemonitor.databinding.ActivityMainBinding;
 import com.project.beehivemonitor.util.BluetoothOperations;
+import com.project.beehivemonitor.util.Logger;
 
 public class MainActivity extends BaseActivity<ActivityMainBinding> {
 
@@ -19,6 +20,7 @@ public class MainActivity extends BaseActivity<ActivityMainBinding> {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Logger.info("MainActivity onDestroy");
         BluetoothOperations.disconnectDevice();
     }
 
