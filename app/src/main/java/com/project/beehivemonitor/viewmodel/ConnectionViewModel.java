@@ -15,6 +15,7 @@ public class ConnectionViewModel extends ViewModel {
     private final MutableLiveData<Event<ScannedDevice>> scannedDeviceLiveData = new MutableLiveData<>();
     private final MutableLiveData<Event<Boolean>> bluetoothStateLiveData = new MutableLiveData<>();
     private final MutableLiveData<Event<ConnectionState>> connectionStateLiveData = new MutableLiveData<>();
+    private final MutableLiveData<Event<Boolean>> connectionSetupStatusLiveData = new MutableLiveData<>();
 
     private final BluetoothOperations.ConnectionCallback connectionCallback = new BluetoothOperations.ConnectionCallback() {
         @Override
@@ -34,7 +35,17 @@ public class ConnectionViewModel extends ViewModel {
 
         @Override
         public void onConnectionStateChanged(ConnectionState connectionState) {
-            connectionStateLiveData.postValue(new Event<>(connectionState));
+            Event<ConnectionState> currentValue = connectionStateLiveData.getValue();
+            if(currentValue != null && currentValue.peekContent() == connectionState) {
+                connectionStateLiveData.postValue(currentValue);
+            } else {
+                connectionStateLiveData.postValue(new Event<>(connectionState));
+            }
+        }
+
+        @Override
+        public void onConnectionSetupComplete() {
+            connectionSetupStatusLiveData.postValue(new Event<>(true));
         }
     };
 
@@ -52,6 +63,10 @@ public class ConnectionViewModel extends ViewModel {
 
     public LiveData<Event<ConnectionState>> getConnectionStateLiveData() {
         return connectionStateLiveData;
+    }
+
+    public LiveData<Event<Boolean>> getConnectionSetupStatusLiveData() {
+        return connectionSetupStatusLiveData;
     }
 
     public void connect(String name, String macAddress) {

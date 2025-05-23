@@ -12,6 +12,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothStatusCodes;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
@@ -240,7 +241,7 @@ public final class BluetoothOperations {
                 switch (newState) {
                     case BluetoothProfile.STATE_CONNECTED: {
                         setDeviceConnectionState(ConnectionState.CONNECTED);
-                        handler.post(() -> gatt.requestMtu(GATT_MAX_MTU_SIZE));
+                        handler.post(gatt::discoverServices);
                         break;
                     }
 
@@ -270,43 +271,11 @@ public final class BluetoothOperations {
                 gatt.close();
                 return;
             }
-            pendingWriteDescriptors.clear();
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 completeDisconnect();
                 return;
             }
-            List<BluetoothGattService> bluetoothGattServices = gatt.getServices();
-            bluetoothGattServices.forEach(service -> {
-                Logger.info("service: " + service.getUuid().toString());
-                service.getCharacteristics().forEach(characteristic -> {
-                    Logger.info("characteristic: " + characteristic.getUuid().toString());
-                    boolean notificationSet = gatt.setCharacteristicNotification(characteristic, true);
-                    if (notificationSet) {
-                        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CCC_DESCRIPTOR_UUID);
-                        Logger.info("notification set");
-                        if (descriptor != null) {
-                            Logger.info("descriptor not null");
-                            int properties = characteristic.getProperties();
-                            byte[] descriptorValue;
-                            if ((properties & BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
-                                descriptorValue = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE;
-                                Logger.info("characteristic has notify property");
-                            } else if ((properties & BluetoothGattCharacteristic.PROPERTY_INDICATE) > 0) {
-                                descriptorValue = BluetoothGattDescriptor.ENABLE_INDICATION_VALUE;
-                                Logger.info("characteristic has indicate property");
-                            } else {
-                                Logger.info("characteristic does not have notify or indicate property");
-                                return;
-                            }
-                            pendingWriteDescriptors.add(() -> {
-                                descriptor.setValue(descriptorValue);
-                                gatt.writeDescriptor(descriptor);
-                            });
-                            runPendingWriteDescriptors();
-                        }
-                    }
-                });
-            });
+            handler.post(() -> gatt.requestMtu(GATT_MAX_MTU_SIZE));
         }
 
         @Override
@@ -361,26 +330,90 @@ public final class BluetoothOperations {
 
         @Override
         public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
-            Logger.info("onMtuChanged - mtu: " + mtu + ", status: " + status);
+            String macAddress = gatt.getDevice().getAddress();
+            Logger.info("onMtuChanged - macAddress: " + macAddress + ", mtu: " + mtu + ", status: " + status);
+            BluetoothDevice bluetoothDevice = _bluetoothDevice;
+            if (bluetoothDevice == null || !Objects.equals(bluetoothDevice.getAddress(), macAddress)) {
+                Logger.error("onMtuChanged received for different macAddress");
+                gatt.close();
+                return;
+            }
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Logger.info("onMtuChanged success");
             } else {
                 Logger.warn("onMtuChanged failed");
             }
-            handler.post(gatt::discoverServices);
+            pendingWriteDescriptors.clear();
+            for (BluetoothGattService service : gatt.getServices()) {
+                Logger.info("service: " + service.getUuid().toString());
+                for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
+                    Logger.info("characteristic: " + characteristic.getUuid().toString());
+                    pendingWriteDescriptors.add(() -> {
+                        Logger.info("Running Enable Notifications for service: " + service.getUuid() + ", characteristic: " + characteristic.getUuid());
+                        boolean isWriteDescriptorCalled = enableNotifications(gatt, characteristic);
+                        if(!isWriteDescriptorCalled) {
+                            Logger.info("writeDescriptor not called");
+                            isWriteDescriptorInProgress.set(false);
+                            runPendingWriteDescriptors();
+                        }
+                    });
+                    Logger.info("write descriptor added to queue, position: " + pendingWriteDescriptors.size());
+                }
+            }
+            runPendingWriteDescriptors();
         }
     };
 
     private static void runPendingWriteDescriptors() {
-        if (!pendingWriteDescriptors.isEmpty() && isWriteDescriptorInProgress.compareAndSet(false, true)) {
+        Logger.info("runPendingWriteDescriptors - pendingWriteDescriptors size " + pendingWriteDescriptors.size());
+        if(pendingWriteDescriptors.isEmpty()) {
+            Logger.info("runPendingWriteDescriptors - complete");
+            sendConnectionCallback(ConnectionCallback::onConnectionSetupComplete);
+            return;
+        }
+        if (isWriteDescriptorInProgress.compareAndSet(false, true)) {
             Runnable task = pendingWriteDescriptors.poll();
             if (task != null) {
                 Logger.info("runPendingWriteDescriptors - running next");
-                task.run();
+                handler.post(task);
             } else {
                 runPendingWriteDescriptors();
             }
         }
+    }
+
+    @SuppressLint("MissingPermission")
+    private static boolean enableNotifications(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+        boolean notificationSet = gatt.setCharacteristicNotification(characteristic, true);
+        if (notificationSet) {
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CCC_DESCRIPTOR_UUID);
+            Logger.info("notification set");
+            if (descriptor != null) {
+                Logger.info("descriptor not null");
+                int properties = characteristic.getProperties();
+                byte[] descriptorValue;
+                if ((properties & BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+                    descriptorValue = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE;
+                    Logger.info("characteristic has notify property");
+                } else if ((properties & BluetoothGattCharacteristic.PROPERTY_INDICATE) > 0) {
+                    descriptorValue = BluetoothGattDescriptor.ENABLE_INDICATION_VALUE;
+                    Logger.info("characteristic has indicate property");
+                } else {
+                    Logger.info("characteristic does not have notify or indicate property");
+                    return false;
+                }
+                boolean result;
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    result = gatt.writeDescriptor(descriptor, descriptorValue) == BluetoothStatusCodes.SUCCESS;
+                } else {
+                    descriptor.setValue(descriptorValue);
+                    result = gatt.writeDescriptor(descriptor);
+                }
+                Logger.info("writeDescriptor call successful: " + result);
+                return true;
+            }
+        }
+        return false;
     }
 
     @SuppressLint("MissingPermission")
@@ -457,6 +490,8 @@ public final class BluetoothOperations {
         void onDeviceScanFailed();
 
         void onConnectionStateChanged(ConnectionState connectionState);
+
+        void onConnectionSetupComplete();
     }
 
     public interface DataCallback {

@@ -43,6 +43,7 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final AtomicBoolean isScanning = new AtomicBoolean(false);
     private boolean isConnecting;
+    private boolean isAwaitingConnectionSetup;
     private ScannedDevice selectedDevice;
 
     private ConnectionViewModel connectionViewModel;
@@ -53,6 +54,7 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
     @Override
     protected void initOnCreateView() {
         isConnecting = false;
+        isAwaitingConnectionSetup = false;
         connectionViewModel = new ViewModelProvider(this).get(ConnectionViewModel.class);
         adapterScannedDevices = new AdapterScannedDevices(scannedDevice -> {
             stopScan();
@@ -77,6 +79,7 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
         });
         connectionViewModel.getBluetoothStateLiveData().observe(this, bluetoothStateObserver);
         connectionViewModel.getConnectionStateLiveData().observe(this, connectionStateObserver);
+        connectionViewModel.getConnectionSetupStatusLiveData().observe(this, connectionSetupStatusObserver);
     }
 
     @Override
@@ -91,13 +94,6 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
     public void onPause() {
         super.onPause();
         stopScan();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        connectionViewModel.getBluetoothStateLiveData().removeObserver(bluetoothStateObserver);
-        connectionViewModel.getConnectionStateLiveData().removeObserver(connectionStateObserver);
     }
 
     private void startScan() {
@@ -176,23 +172,36 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
         Logger.info("connectionStateObserver - connectionState: " + connectionState);
         switch (connectionState) {
             case CONNECTED: {
-                isConnecting = false;
-                hideLoading();
-                showToast("Connection Successful");
-                PreferenceManager.getInstance().setSelectedDevice(selectedDevice);
-                navigateToDataFragment();
+                isAwaitingConnectionSetup = true;
+                showLoading("Getting device ready...");
                 break;
             }
             case CONNECTING: {
+                isAwaitingConnectionSetup = false;
                 showLoading("Connecting...");
                 break;
             }
             case DISCONNECTED: {
                 isConnecting = false;
+                isAwaitingConnectionSetup = false;
                 hideLoading();
                 showToast("Connection failed, try again");
                 break;
             }
+        }
+    };
+
+    private final Observer<Event<Boolean>> connectionSetupStatusObserver = connectionSetupStatusEvent -> {
+        if(!isAwaitingConnectionSetup || connectionSetupStatusEvent.hasBeenHandled()) return;
+        Boolean connectionSetupStatus = connectionSetupStatusEvent.getContentIfNotHandled();
+        Logger.info("connectionSetupStatusObserver - connectionSetupStatus: " + connectionSetupStatus);
+        if(connectionSetupStatus) {
+            isConnecting = false;
+            isAwaitingConnectionSetup = false;
+            hideLoading();
+            showToast("Connection Successful");
+            PreferenceManager.getInstance().setSelectedDevice(selectedDevice);
+            navigateToDataFragment();
         }
     };
 

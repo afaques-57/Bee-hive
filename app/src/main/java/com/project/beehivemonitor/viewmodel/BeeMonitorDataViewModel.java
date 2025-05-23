@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.project.beehivemonitor.fragment.DataFragment;
 import com.project.beehivemonitor.util.BluetoothOperations;
 import com.project.beehivemonitor.util.Event;
 import com.project.beehivemonitor.util.Logger;
@@ -91,15 +92,15 @@ public class BeeMonitorDataViewModel extends ViewModel {
         String event = "";
         switch (random.nextInt(3)) {
             case 0: {
-                event = "NORMAL";
+                event = DataFragment.NORMAL_TEXT;
                 break;
             }
             case 1: {
-                event = "NO QUEEN";
+                event = DataFragment.NO_QUEEN_TEXT;
                 break;
             }
             case 2: {
-                event = "SWARMING";
+                event = DataFragment.SWARMING_TEXT;
                 break;
             }
         }
