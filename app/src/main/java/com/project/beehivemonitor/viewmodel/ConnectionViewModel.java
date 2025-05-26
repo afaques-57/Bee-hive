@@ -8,7 +8,7 @@ import com.project.beehivemonitor.BeeHiveMonitorApp;
 import com.project.beehivemonitor.model.ScannedDevice;
 import com.project.beehivemonitor.util.BluetoothOperations;
 import com.project.beehivemonitor.util.ConnectionState;
-import com.project.beehivemonitor.util.Event;
+import com.project.beehivemonitor.model.Event;
 
 public class ConnectionViewModel extends ViewModel {
 
@@ -83,12 +83,6 @@ public class ConnectionViewModel extends ViewModel {
 
     public void stopScan() {
         BluetoothOperations.stopScan();
-    }
-
-    public interface ConnectionCallback {
-        void onSuccess();
-
-        void onError();
     }
 
     @Override

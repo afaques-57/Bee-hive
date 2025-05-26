@@ -88,39 +88,6 @@ public final class BluetoothOperations {
         }
     };
 
-    /*private static final BroadcastReceiver bondStateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) {
-                BluetoothDevice device = _bluetoothDevice;
-                BluetoothDevice extraDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                if (device == null || extraDevice == null || !Objects.equals(device.getAddress(), extraDevice.getAddress())) {
-                    Logger.info("bondStateReceiver proceed conditions failed!");
-                    return;
-                }
-                int bondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
-                int prevBondState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
-
-                Logger.info("Bond state changed: " + bondState + " (from " + prevBondState + ")");
-
-                switch (bondState) {
-                    case BluetoothDevice.BOND_BONDED:
-                        Logger.info("Device bonded successfully!");
-                        connectDevice(BeeHiveMonitorApp.application, device.getAddress());
-                        break;
-                    case BluetoothDevice.BOND_NONE:
-                        Logger.warn("Bonding failed or was revoked.");
-                        completeDisconnect();
-                        break;
-                    case BluetoothDevice.BOND_BONDING:
-                        Logger.info("Bonding in progress...");
-                        break;
-                }
-            }
-        }
-    };*/
-
     @SuppressLint("MissingPermission")
     private static final ScanCallback scanCallback = new ScanCallback() {
         @Override
@@ -129,7 +96,7 @@ public final class BluetoothOperations {
             sendConnectionCallback(connectionCallback -> {
                 try {
                     String deviceName = result.getDevice().getName();
-                    deviceName = deviceName == null ? "" : deviceName;
+                    deviceName = deviceName != null ? deviceName : "";
                     connectionCallback.onScannedDeviceFound(new ScannedDevice(deviceName, result.getDevice().getAddress()));
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -351,7 +318,7 @@ public final class BluetoothOperations {
                     pendingWriteDescriptors.add(() -> {
                         Logger.info("Running Enable Notifications for service: " + service.getUuid() + ", characteristic: " + characteristic.getUuid());
                         boolean isWriteDescriptorCalled = enableNotifications(gatt, characteristic);
-                        if(!isWriteDescriptorCalled) {
+                        if (!isWriteDescriptorCalled) {
                             Logger.info("writeDescriptor not called");
                             isWriteDescriptorInProgress.set(false);
                             runPendingWriteDescriptors();
@@ -366,7 +333,7 @@ public final class BluetoothOperations {
 
     private static void runPendingWriteDescriptors() {
         Logger.info("runPendingWriteDescriptors - pendingWriteDescriptors size " + pendingWriteDescriptors.size());
-        if(pendingWriteDescriptors.isEmpty()) {
+        if (pendingWriteDescriptors.isEmpty()) {
             Logger.info("runPendingWriteDescriptors - complete");
             sendConnectionCallback(ConnectionCallback::onConnectionSetupComplete);
             return;

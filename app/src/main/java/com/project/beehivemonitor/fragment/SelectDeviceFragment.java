@@ -24,7 +24,7 @@ import com.project.beehivemonitor.databinding.FragmentSelectDeviceBinding;
 import com.project.beehivemonitor.model.ScannedDevice;
 import com.project.beehivemonitor.util.BluetoothOperations;
 import com.project.beehivemonitor.util.ConnectionState;
-import com.project.beehivemonitor.util.Event;
+import com.project.beehivemonitor.model.Event;
 import com.project.beehivemonitor.util.Logger;
 import com.project.beehivemonitor.util.PermissionUtil;
 import com.project.beehivemonitor.util.PreferenceManager;

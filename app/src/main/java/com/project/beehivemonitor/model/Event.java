@@ -1,4 +1,4 @@
-package com.project.beehivemonitor.util;
+package com.project.beehivemonitor.model;
 
 public class Event<T> {
 

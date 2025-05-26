@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.project.beehivemonitor.fragment.DataFragment;
 import com.project.beehivemonitor.util.BluetoothOperations;
-import com.project.beehivemonitor.util.Event;
+import com.project.beehivemonitor.model.Event;
 import com.project.beehivemonitor.util.Logger;
 
 import org.json.JSONException;
@@ -17,6 +17,7 @@ import java.util.Random;
 
 public class BeeMonitorDataViewModel extends ViewModel {
     private static final String DATA_NOTIFICATION_UUID = "0000180f-0000-1000-8000-00805f9b34fb";
+
     MutableLiveData<Event<String>> eventLiveData = new MutableLiveData<>();
     MutableLiveData<Event<Float>> temperatureLiveData = new MutableLiveData<>();
     MutableLiveData<Event<Float>> humidityLiveData = new MutableLiveData<>();
@@ -73,37 +74,6 @@ public class BeeMonitorDataViewModel extends ViewModel {
 
     public LiveData<Event<Float>> getTemperatureLiveData() {
         return temperatureLiveData;
-    }
-
-    Random random = new Random();
-
-    public void postSampleData() {
-        float tempMin = 25.0f;
-        float tempMax = 30.0f;
-        float randomTempFloat = tempMin + random.nextFloat() * (tempMax - tempMin);
-        temperatureLiveData.postValue(new Event<>(randomTempFloat));
-
-        float humidityMin = 28.0f;
-        float humidityMax = 52.0f;
-        float randomHumidityFloat = humidityMin + random.nextFloat() * (humidityMax - humidityMin);
-        humidityLiveData.postValue(new Event<>(randomHumidityFloat));
-
-        String event = "";
-        switch (random.nextInt(3)) {
-            case 0: {
-                event = DataFragment.NORMAL_TEXT;
-                break;
-            }
-            case 1: {
-                event = DataFragment.NO_QUEEN_TEXT;
-                break;
-            }
-            case 2: {
-                event = DataFragment.SWARMING_TEXT;
-                break;
-            }
-        }
-        eventLiveData.postValue(new Event<>(event));
     }
 
     @Override

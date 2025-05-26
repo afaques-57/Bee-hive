@@ -32,7 +32,7 @@ import com.project.beehivemonitor.databinding.FragmentDataBinding;
 import com.project.beehivemonitor.model.ScannedDevice;
 import com.project.beehivemonitor.util.BluetoothOperations;
 import com.project.beehivemonitor.util.ConnectionState;
-import com.project.beehivemonitor.util.Event;
+import com.project.beehivemonitor.model.Event;
 import com.project.beehivemonitor.util.Logger;
 import com.project.beehivemonitor.util.PermissionUtil;
 import com.project.beehivemonitor.util.PreferenceManager;
@@ -99,27 +99,6 @@ public class DataFragment extends BaseFragment<FragmentDataBinding> {
         connectionViewModel.getBluetoothStateLiveData().observe(this, bluetoothStateObserver);
         connectionViewModel.getConnectionStateLiveData().observe(this, connectionStateObserver);
         handleBeeMonitoringData();
-    }
-
-    Runnable addDataRunnable = () -> {
-        beeMonitorDataViewModel.postSampleData();
-        addData();
-    };
-
-    private void addData() {
-        handler.postDelayed(addDataRunnable, 2000);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-//        addData();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        handler.removeCallbacks(addDataRunnable);
     }
 
     @Override
