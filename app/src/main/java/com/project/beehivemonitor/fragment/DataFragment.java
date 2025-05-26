@@ -46,9 +46,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DataFragment extends BaseFragment<FragmentDataBinding> {
 
-    public static final String NORMAL_TEXT = "QUEEN BEE";
-    public static final String NO_QUEEN_TEXT = "NO QUEEN BEE";
-    public static final String SWARMING_TEXT = "SWARMING";
+    private static final String NORMAL_TEXT = "QUEEN BEE";
+    private static final String NO_QUEEN_TEXT = "NO QUEEN BEE";
+    private static final String SWARMING_TEXT = "SWARMING";
 
     private static final String CONNECT_TEXT = "Connect";
     private static final String DISCONNECT_TEXT = "Disconnect";
