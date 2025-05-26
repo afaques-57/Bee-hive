@@ -27,7 +27,7 @@ public class MainActivity extends BaseActivity<ActivityMainBinding> {
     @Override
     public NavHostFragment getNavHostFragment() {
         NavHostFragment navHostFragment = mNavHostFragment;
-        if(navHostFragment == null) {
+        if (navHostFragment == null) {
             navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
             mNavHostFragment = navHostFragment;
         }

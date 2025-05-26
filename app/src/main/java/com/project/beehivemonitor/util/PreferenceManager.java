@@ -31,7 +31,7 @@ public class PreferenceManager {
     }
 
     public void setSelectedDevice(ScannedDevice scannedDevice) {
-        if(scannedDevice == null) {
+        if (scannedDevice == null) {
             prefs.edit().remove(SELECTED_DEVICE).apply();
         } else {
             prefs.edit().putString(SELECTED_DEVICE, gson.toJson(scannedDevice)).apply();

@@ -5,10 +5,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.project.beehivemonitor.BeeHiveMonitorApp;
+import com.project.beehivemonitor.model.Event;
 import com.project.beehivemonitor.model.ScannedDevice;
 import com.project.beehivemonitor.util.BluetoothOperations;
 import com.project.beehivemonitor.util.ConnectionState;
-import com.project.beehivemonitor.model.Event;
 
 public class ConnectionViewModel extends ViewModel {
 
@@ -36,7 +36,7 @@ public class ConnectionViewModel extends ViewModel {
         @Override
         public void onConnectionStateChanged(ConnectionState connectionState) {
             Event<ConnectionState> currentValue = connectionStateLiveData.getValue();
-            if(currentValue != null && currentValue.peekContent() == connectionState) {
+            if (currentValue != null && currentValue.peekContent() == connectionState) {
                 connectionStateLiveData.postValue(currentValue);
             } else {
                 connectionStateLiveData.postValue(new Event<>(connectionState));

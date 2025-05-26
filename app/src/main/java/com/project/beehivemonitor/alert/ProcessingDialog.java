@@ -30,14 +30,14 @@ public class ProcessingDialog extends BottomSheetDialogFragment {
     }
 
     public String getInfoText() {
-        if(binding != null) {
+        if (binding != null) {
             return binding.tvInfo.getText().toString();
         }
         return infoText;
     }
 
     public void setInfoText(String infoText) {
-        if(binding != null) {
+        if (binding != null) {
             binding.tvInfo.setText(infoText);
         } else {
             this.infoText = infoText;

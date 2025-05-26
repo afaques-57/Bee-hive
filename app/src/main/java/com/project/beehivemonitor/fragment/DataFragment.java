@@ -29,10 +29,10 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.project.beehivemonitor.R;
 import com.project.beehivemonitor.databinding.FragmentDataBinding;
+import com.project.beehivemonitor.model.Event;
 import com.project.beehivemonitor.model.ScannedDevice;
 import com.project.beehivemonitor.util.BluetoothOperations;
 import com.project.beehivemonitor.util.ConnectionState;
-import com.project.beehivemonitor.model.Event;
 import com.project.beehivemonitor.util.Logger;
 import com.project.beehivemonitor.util.PermissionUtil;
 import com.project.beehivemonitor.util.PreferenceManager;
@@ -46,23 +46,23 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DataFragment extends BaseFragment<FragmentDataBinding> {
 
-    private static final String CONNECT_TEXT = "Connect";
-    private static final String DISCONNECT_TEXT = "Disconnect";
-    private static final String CONNECTING_TEXT = "Connecting...";
-
     public static final String NORMAL_TEXT = "QUEEN BEE";
     public static final String NO_QUEEN_TEXT = "NO QUEEN BEE";
     public static final String SWARMING_TEXT = "SWARMING";
 
+    private static final String CONNECT_TEXT = "Connect";
+    private static final String DISCONNECT_TEXT = "Disconnect";
+    private static final String CONNECTING_TEXT = "Connecting...";
+
+    private static final int GRAPH_VALUES_LIMIT = 10;
+
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private final ScannedDevice selectedDevice = PreferenceManager.getInstance().getSelectedDevice();
+    private final List<Float> temperatureValues = new CopyOnWriteArrayList<>();
+    private final List<Float> humidityValues = new CopyOnWriteArrayList<>();
 
     private ConnectionViewModel connectionViewModel;
     private BeeMonitorDataViewModel beeMonitorDataViewModel;
-    private final ScannedDevice selectedDevice = PreferenceManager.getInstance().getSelectedDevice();
-
-    private final List<Float> temperatureValues = new CopyOnWriteArrayList<>();
-    private final List<Float> humidityValues = new CopyOnWriteArrayList<>();
-    private static final int GRAPH_VALUES_LIMIT = 10;
 
     @Override
     protected void initOnCreateView() {

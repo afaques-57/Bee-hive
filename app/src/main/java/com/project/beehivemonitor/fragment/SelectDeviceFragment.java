@@ -21,10 +21,10 @@ import com.project.beehivemonitor.R;
 import com.project.beehivemonitor.activity.BaseActivity;
 import com.project.beehivemonitor.adapter.AdapterScannedDevices;
 import com.project.beehivemonitor.databinding.FragmentSelectDeviceBinding;
+import com.project.beehivemonitor.model.Event;
 import com.project.beehivemonitor.model.ScannedDevice;
 import com.project.beehivemonitor.util.BluetoothOperations;
 import com.project.beehivemonitor.util.ConnectionState;
-import com.project.beehivemonitor.model.Event;
 import com.project.beehivemonitor.util.Logger;
 import com.project.beehivemonitor.util.PermissionUtil;
 import com.project.beehivemonitor.util.PreferenceManager;
@@ -41,15 +41,14 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
     private static final String STOP_SCAN_TEXT = "Stop Scan";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable stopScanRunnable = this::stopScan;
     private final AtomicBoolean isScanning = new AtomicBoolean(false);
-    private boolean isConnecting;
-    private boolean isAwaitingConnectionSetup;
-    private ScannedDevice selectedDevice;
 
     private ConnectionViewModel connectionViewModel;
     private AdapterScannedDevices adapterScannedDevices;
-
-    private final Runnable stopScanRunnable = this::stopScan;
+    private ScannedDevice selectedDevice;
+    private boolean isConnecting;
+    private boolean isAwaitingConnectionSetup;
 
     @Override
     protected void initOnCreateView() {
@@ -97,7 +96,7 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
     }
 
     private void startScan() {
-        if(isScanning.compareAndSet(false, true)) {
+        if (isScanning.compareAndSet(false, true)) {
             binding.btnScan.setText(STOP_SCAN_TEXT);
             adapterScannedDevices.clearScannedDevices();
             connectionViewModel.getScannedDeviceLiveData().observe(this, scannedDeviceObserver);
@@ -107,7 +106,7 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
     }
 
     private void stopScan() {
-        if(isScanning.compareAndSet(true, false)) {
+        if (isScanning.compareAndSet(true, false)) {
             handler.removeCallbacks(stopScanRunnable);
             connectionViewModel.stopScan();
             connectionViewModel.getScannedDeviceLiveData().removeObserver(scannedDeviceObserver);
@@ -124,7 +123,7 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
             } else if (!isPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION)) {
                 locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
             } else if (!BluetoothOperations.isBluetoothEnabled()) {
-                if(!BluetoothOperations.requestTurnOnBluetooth(activity)) {
+                if (!BluetoothOperations.requestTurnOnBluetooth(activity)) {
                     showToast("Turn on bluetooth to proceed");
                 }
             } else {
@@ -143,11 +142,12 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
         return FragmentSelectDeviceBinding.inflate(getLayoutInflater(), container, false);
     }
 
+
     private final Observer<Event<ScannedDevice>> scannedDeviceObserver = scannedDeviceEvent -> {
-        if(scannedDeviceEvent.hasBeenHandled()) return;
+        if (scannedDeviceEvent.hasBeenHandled()) return;
         ScannedDevice scannedDevice = scannedDeviceEvent.getContentIfNotHandled();
-        if(scannedDevice != null) {
-            if(scannedDevice.getName() != null && !scannedDevice.getName().isBlank() && scannedDevice.getName().toLowerCase().startsWith(SCAN_DEVICE_NAME_PREFIX.toLowerCase())) {
+        if (scannedDevice != null) {
+            if (scannedDevice.getName() != null && !scannedDevice.getName().isBlank() && scannedDevice.getName().toLowerCase().startsWith(SCAN_DEVICE_NAME_PREFIX.toLowerCase())) {
                 adapterScannedDevices.addScannedDevice(scannedDevice);
             }
         } else {
@@ -157,17 +157,17 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
     };
 
     private final Observer<Event<Boolean>> bluetoothStateObserver = isBluetoothOnEvent -> {
-        if(isBluetoothOnEvent.hasBeenHandled()) return;
+        if (isBluetoothOnEvent.hasBeenHandled()) return;
         boolean isBluetoothOn = isBluetoothOnEvent.getContentIfNotHandled();
         Logger.info("bluetoothStateObserver - isBluetoothOn: " + isBluetoothOn);
-        if(!isBluetoothOn) {
+        if (!isBluetoothOn) {
             stopScan();
         }
         checkPermissionsAndScan();
     };
 
     private final Observer<Event<ConnectionState>> connectionStateObserver = connectionStateEvent -> {
-        if(!isConnecting || connectionStateEvent.hasBeenHandled()) return;
+        if (!isConnecting || connectionStateEvent.hasBeenHandled()) return;
         ConnectionState connectionState = connectionStateEvent.getContentIfNotHandled();
         Logger.info("connectionStateObserver - connectionState: " + connectionState);
         switch (connectionState) {
@@ -192,10 +192,10 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
     };
 
     private final Observer<Event<Boolean>> connectionSetupStatusObserver = connectionSetupStatusEvent -> {
-        if(!isAwaitingConnectionSetup || connectionSetupStatusEvent.hasBeenHandled()) return;
+        if (!isAwaitingConnectionSetup || connectionSetupStatusEvent.hasBeenHandled()) return;
         Boolean connectionSetupStatus = connectionSetupStatusEvent.getContentIfNotHandled();
         Logger.info("connectionSetupStatusObserver - connectionSetupStatus: " + connectionSetupStatus);
-        if(connectionSetupStatus) {
+        if (connectionSetupStatus) {
             isConnecting = false;
             isAwaitingConnectionSetup = false;
             hideLoading();
@@ -209,7 +209,7 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
         for (Map.Entry<String, Boolean> permission : permissions.entrySet()) {
             if (!permission.getValue()) {
                 runWithActivity(activity -> {
-                    if(ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.BLUETOOTH_CONNECT)) {
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.BLUETOOTH_CONNECT)) {
                         showToast("Near by devices permission required!", true);
                     } else {
                         runWithContext(context -> {
@@ -227,11 +227,11 @@ public class SelectDeviceFragment extends BaseFragment<FragmentSelectDeviceBindi
     });
 
     private final ActivityResultLauncher<String> locationPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), permissionGranted -> {
-        if(permissionGranted) {
+        if (permissionGranted) {
             checkPermissionsAndScan();
         } else {
             runWithActivity(activity -> {
-                if(ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.BLUETOOTH_CONNECT)) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.BLUETOOTH_CONNECT)) {
                     showToast("Precise Location permission required!", true);
                 } else {
                     runWithContext(context -> {

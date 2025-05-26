@@ -4,16 +4,14 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.project.beehivemonitor.fragment.DataFragment;
-import com.project.beehivemonitor.util.BluetoothOperations;
 import com.project.beehivemonitor.model.Event;
+import com.project.beehivemonitor.util.BluetoothOperations;
 import com.project.beehivemonitor.util.Logger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Random;
 
 public class BeeMonitorDataViewModel extends ViewModel {
     private static final String DATA_NOTIFICATION_UUID = "0000180f-0000-1000-8000-00805f9b34fb";

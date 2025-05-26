@@ -21,6 +21,7 @@ public class AdapterScannedDevices extends RecyclerView.Adapter<RecyclerView.Vie
     private final List<ScannedDevice> scannedDeviceList = new ArrayList<>();
     @NonNull
     private final OnItemClickListener onItemClickListener;
+
     public AdapterScannedDevices(@NonNull OnItemClickListener onItemClickListener) {
         this.onItemClickListener = onItemClickListener;
     }
@@ -49,7 +50,7 @@ public class AdapterScannedDevices extends RecyclerView.Adapter<RecyclerView.Vie
     }
 
     public void addScannedDevice(ScannedDevice scannedDevice) {
-        if(scannedDeviceList.stream().noneMatch(device -> Objects.equals(scannedDevice.getMacAddress(), device.getMacAddress()))) {
+        if (scannedDeviceList.stream().noneMatch(device -> Objects.equals(scannedDevice.getMacAddress(), device.getMacAddress()))) {
             Logger.info("AdapterScannedDevices - addScannedDevice: " + scannedDevice);
             scannedDeviceList.add(scannedDevice);
             notifyItemInserted(scannedDeviceList.indexOf(scannedDevice));

@@ -61,32 +61,10 @@ public final class BluetoothOperations {
     private static final Queue<Runnable> pendingWriteDescriptors = new ConcurrentLinkedQueue<>();
     private static final AtomicBoolean isWriteDescriptorInProgress = new AtomicBoolean(false);
 
+    volatile private static ConnectionState mDeviceState = ConnectionState.DISCONNECTED;
     private static BluetoothLeScanner bluetoothLeScanner;
     volatile private static BluetoothDevice _bluetoothDevice;
     volatile private static BluetoothGatt bluetoothGatt;
-
-    volatile private static ConnectionState _deviceState = ConnectionState.DISCONNECTED;
-
-    private static final BroadcastReceiver adapterStateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (Objects.equals(intent.getAction(), BluetoothAdapter.ACTION_STATE_CHANGED)) {
-                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
-                switch (state) {
-                    case BluetoothAdapter.STATE_ON: {
-                        sendConnectionCallback(connectionCallback -> connectionCallback.onBluetoothStateChanged(true));
-                        break;
-                    }
-                    case BluetoothAdapter.STATE_OFF: {
-                        stopScan();
-                        setDeviceConnectionState(ConnectionState.DISCONNECTED);
-                        sendConnectionCallback(connectionCallback -> connectionCallback.onBluetoothStateChanged(false));
-                        break;
-                    }
-                }
-            }
-        }
-    };
 
     @SuppressLint("MissingPermission")
     private static final ScanCallback scanCallback = new ScanCallback() {
@@ -118,79 +96,26 @@ public final class BluetoothOperations {
             .setReportDelay(0L)
             .build();
 
-    static {
-        BeeHiveMonitorApp.application.registerReceiver(adapterStateReceiver, new IntentFilter((BluetoothAdapter.ACTION_STATE_CHANGED)));
-    }
-
-    public static boolean isDeviceConnected() {
-        return _deviceState == ConnectionState.CONNECTED;
-    }
-
-    public static void connectDevice(Context context, String macAddress) {
-        Logger.info("connectDevice called for " + macAddress);
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            Logger.error("permission not granted");
-            return;
-        }
-        BluetoothDevice bluetoothDevice = getBluetoothDevice(macAddress);
-        if (!isDeviceConnected()) {
-            setDeviceConnectionState(ConnectionState.CONNECTING);
-            handler.post(() -> bluetoothGatt = bluetoothDevice.connectGatt(context, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE));
-        } else {
-            setDeviceConnectionState(ConnectionState.CONNECTED);
-            Logger.info("connectDevice called - device already connected");
-        }
-    }
-
-    public static void disconnectDevice() {
-        Logger.info("disconnectDevice called");
-        BluetoothGatt bluetoothGatt = BluetoothOperations.bluetoothGatt;
-        if (bluetoothGatt != null) {
-            handler.post(bluetoothGatt::disconnect);
-        } else {
-            Logger.info("disconnectDevice called - BluetoothGatt not found");
-        }
-        handler.postDelayed(BluetoothOperations::completeDisconnect, 50);
-    }
-
-    public static boolean startScan() {
-        try {
-            bluetoothLeScanner = getBluetoothAdapter().getBluetoothLeScanner();
-            if (ContextCompat.checkSelfPermission(BeeHiveMonitorApp.application, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-                return false;
+    private static final BroadcastReceiver adapterStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Objects.equals(intent.getAction(), BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+                switch (state) {
+                    case BluetoothAdapter.STATE_ON: {
+                        sendConnectionCallback(connectionCallback -> connectionCallback.onBluetoothStateChanged(true));
+                        break;
+                    }
+                    case BluetoothAdapter.STATE_OFF: {
+                        stopScan();
+                        setDeviceConnectionState(ConnectionState.DISCONNECTED);
+                        sendConnectionCallback(connectionCallback -> connectionCallback.onBluetoothStateChanged(false));
+                        break;
+                    }
+                }
             }
-            bluetoothLeScanner.startScan(null, scanSettings, scanCallback);
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
         }
-    }
-
-    public static void stopScan() {
-        try {
-            if (ContextCompat.checkSelfPermission(BeeHiveMonitorApp.application, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
-                bluetoothLeScanner.stopScan(scanCallback);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static boolean requestTurnOnBluetooth(Activity activity) {
-        if (!isBluetoothEnabled()) {
-            if (activity.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED || activity.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-                return false;
-            }
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            activity.startActivityForResult(enableBtIntent, 1212);
-        }
-        return true;
-    }
-
-    public static boolean isBluetoothEnabled() {
-        return getBluetoothAdapter().isEnabled();
-    }
+    };
 
     @SuppressLint("MissingPermission")
     private static final BluetoothGattCallback bluetoothGattCallback = new BluetoothGattCallback() {
@@ -331,6 +256,80 @@ public final class BluetoothOperations {
         }
     };
 
+    static {
+        BeeHiveMonitorApp.application.registerReceiver(adapterStateReceiver, new IntentFilter((BluetoothAdapter.ACTION_STATE_CHANGED)));
+    }
+
+    public static boolean isDeviceConnected() {
+        return mDeviceState == ConnectionState.CONNECTED;
+    }
+
+    public static void connectDevice(Context context, String macAddress) {
+        Logger.info("connectDevice called for " + macAddress);
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Logger.error("permission not granted");
+            return;
+        }
+        BluetoothDevice bluetoothDevice = getBluetoothDevice(macAddress);
+        if (!isDeviceConnected()) {
+            setDeviceConnectionState(ConnectionState.CONNECTING);
+            handler.post(() -> bluetoothGatt = bluetoothDevice.connectGatt(context, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE));
+        } else {
+            setDeviceConnectionState(ConnectionState.CONNECTED);
+            Logger.info("connectDevice called - device already connected");
+        }
+    }
+
+    public static void disconnectDevice() {
+        Logger.info("disconnectDevice called");
+        BluetoothGatt bluetoothGatt = BluetoothOperations.bluetoothGatt;
+        if (bluetoothGatt != null) {
+            handler.post(bluetoothGatt::disconnect);
+        } else {
+            Logger.info("disconnectDevice called - BluetoothGatt not found");
+        }
+        handler.postDelayed(BluetoothOperations::completeDisconnect, 50);
+    }
+
+    public static boolean startScan() {
+        try {
+            bluetoothLeScanner = getBluetoothAdapter().getBluetoothLeScanner();
+            if (ContextCompat.checkSelfPermission(BeeHiveMonitorApp.application, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+            bluetoothLeScanner.startScan(null, scanSettings, scanCallback);
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static void stopScan() {
+        try {
+            if (ContextCompat.checkSelfPermission(BeeHiveMonitorApp.application, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
+                bluetoothLeScanner.stopScan(scanCallback);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean requestTurnOnBluetooth(Activity activity) {
+        if (!isBluetoothEnabled()) {
+            if (activity.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED || activity.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            activity.startActivityForResult(enableBtIntent, 1212);
+        }
+        return true;
+    }
+
+    public static boolean isBluetoothEnabled() {
+        return getBluetoothAdapter().isEnabled();
+    }
+
     private static void runPendingWriteDescriptors() {
         Logger.info("runPendingWriteDescriptors - pendingWriteDescriptors size " + pendingWriteDescriptors.size());
         if (pendingWriteDescriptors.isEmpty()) {
@@ -401,7 +400,7 @@ public final class BluetoothOperations {
     }
 
     private static void setDeviceConnectionState(ConnectionState connectionState) {
-        _deviceState = connectionState;
+        mDeviceState = connectionState;
         Logger.info("setDeviceConnectionState - connectionState: " + connectionState);
         sendConnectionCallback(connectionCallback -> connectionCallback.onConnectionStateChanged(connectionState));
     }
@@ -418,7 +417,7 @@ public final class BluetoothOperations {
                 completeDisconnect();
             }
             bluetoothDevice = getBluetoothAdapter().getRemoteDevice(macAddress);
-            _deviceState = ConnectionState.DISCONNECTED;
+            mDeviceState = ConnectionState.DISCONNECTED;
             _bluetoothDevice = bluetoothDevice;
         }
         return bluetoothDevice;
